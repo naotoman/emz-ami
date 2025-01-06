@@ -1,0 +1,17 @@
+name: InstallDevTools
+description: this document installs build/dev tools on ubuntu
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: InstallDevTools
+        action: ExecuteBash
+        inputs:
+          commands:
+            - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+            - source ~/.bashrc
+            - nvm install 20
+            - npm install
+            - npx playwright install chromium
+            - npx playwright install-deps
