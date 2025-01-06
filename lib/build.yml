@@ -12,6 +12,9 @@ phases:
             - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
             - source ~/.bashrc
             - nvm install 20
+            - git clone --depth 1 https://github.com/naotoman/emz-ami.git
+            - cd emz-ami/lib/src
             - npm install
             - npx playwright install chromium
             - npx playwright install-deps
+            - npm run start
