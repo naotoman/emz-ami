@@ -11,7 +11,7 @@ export class EmzAmiStack extends cdk.Stack {
       "EmzAmiBuildComponent",
       {
         name: "EmzAmiBuildComponent",
-        version: "1.0.2",
+        version: "1.0.3",
         platform: "Linux",
         data: fs.readFileSync("./lib/build.yml", "utf8"),
       }
@@ -22,7 +22,7 @@ export class EmzAmiStack extends cdk.Stack {
       "EmzAmiRecipe",
       {
         name: "EmzAmiRecipe",
-        version: "1.0.2",
+        version: "1.0.3",
         components: [{ componentArn: buildComponent.attrArn }],
         parentImage: "ami-0265fbea221288607",
       }

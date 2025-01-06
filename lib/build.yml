@@ -1,11 +1,11 @@
-name: InstallDevTools
-description: this document installs build/dev tools on ubuntu
+name: BuildEmzAmi
+description: this document builds emz-ami on ubuntu
 schemaVersion: 1.0
 
 phases:
   - name: build
     steps:
-      - name: InstallDevTools
+      - name: BuildEmzAmi
         action: ExecuteBash
         inputs:
           commands:
@@ -14,7 +14,7 @@ phases:
             - nvm install 20
             - git clone --depth 1 https://github.com/naotoman/emz-ami.git
             - cd emz-ami/lib/src
-            - npm install
+            - npm ci
             - npx playwright install chromium
             - npx playwright install-deps
             - npm run start
