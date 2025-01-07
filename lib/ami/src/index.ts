@@ -32,7 +32,9 @@ interface Body {
   appParams: AppParams;
 }
 
-const sqsClient = new SQSClient();
+const sqsClient = new SQSClient({
+  region: "ap-northeast-1",
+});
 const queueUrl = process.env.QUEUE_URL;
 
 const playMerc = async (page: Page): Promise<ScrapeResult<Merc>> => {
@@ -70,7 +72,7 @@ async function pollMessage(context: BrowserContext) {
   const receiveCommand = new ReceiveMessageCommand({
     QueueUrl: queueUrl,
     MaxNumberOfMessages: 1,
-    WaitTimeSeconds: 5,
+    WaitTimeSeconds: 3,
   });
   const response = await sqsClient.send(receiveCommand);
 
@@ -105,10 +107,15 @@ async function startPolling() {
   });
 
   while (true) {
+    const start = Date.now();
     try {
       await pollMessage(context);
     } catch (error) {
       console.error("Polling error:", error);
+    }
+    const elapsed = Date.now() - start;
+    if (elapsed < 5000) {
+      await new Promise((resolve) => setTimeout(resolve, 5000 - elapsed));
     }
   }
 }
