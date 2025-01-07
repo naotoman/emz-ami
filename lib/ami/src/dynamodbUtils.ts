@@ -1,15 +1,5 @@
-import {
-  DeleteItemCommand,
-  DynamoDBClient,
-  GetItemCommand,
-  UpdateItemCommand,
-} from "@aws-sdk/client-dynamodb";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-
-interface DeleteItemInput {
-  TableName: string;
-  Key: { [key: string]: any };
-}
+import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
+import { marshall } from "@aws-sdk/util-dynamodb";
 
 interface UpdateItemInput {
   TableName: string;
@@ -18,46 +8,6 @@ interface UpdateItemInput {
   ExpressionAttributeNames: { [key: string]: string };
   ExpressionAttributeValues: { [key: string]: any };
 }
-
-export const getItem = async (
-  tableName: string,
-  key: string,
-  val: any
-): Promise<{ [key: string]: any }> => {
-  const input = {
-    TableName: tableName,
-    Key: marshall({ [key]: val }),
-  };
-  const ddbClient = new DynamoDBClient({ region: "ap-northeast-1" });
-  const command = new GetItemCommand(input);
-  const result = await ddbClient.send(command);
-  if (!result.Item) {
-    throw new Error(`Item not found for ${val}`);
-  }
-  return unmarshall(result.Item);
-};
-
-export const makeInputForDeleteItem = (
-  tableName: string,
-  key: string,
-  val: any
-): DeleteItemInput => {
-  return {
-    TableName: tableName,
-    Key: marshall({ [key]: val }),
-  };
-};
-
-export const deleteItem = async (
-  tableName: string,
-  key: string,
-  val: any
-): Promise<void> => {
-  const input = makeInputForDeleteItem(tableName, key, val);
-  const ddbClient = new DynamoDBClient({ region: "ap-northeast-1" });
-  const command = new DeleteItemCommand(input);
-  await ddbClient.send(command);
-};
 
 export const makeInputForUpdateItem = (
   tableName: string,
