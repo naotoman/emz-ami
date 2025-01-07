@@ -13,7 +13,6 @@ import {
   updateOffer,
 } from "./ebay";
 import { myLog } from "./myUtils";
-import { getSecureSsmParam } from "./ssmParamExtension";
 interface User {
   username: string;
   returnPolicy: string;
@@ -52,15 +51,33 @@ interface Event {
   appParams: AppParams;
 }
 
+const cacheGetSsmParam = (() => {
+  let valueMap = new Map<string, string>();
+  return async (ssmParamName: string) => {
+    if (valueMap.has(ssmParamName)) {
+      return valueMap.get(ssmParamName) || "";
+    }
+    const ssmClient = new SSMClient({ region: "ap-northeast-1" });
+    const value = await ssmClient.send(
+      new GetParameterCommand({
+        Name: ssmParamName,
+        WithDecryption: true,
+      })
+    );
+    valueMap.set(ssmParamName, value.Parameter!.Value!);
+    return valueMap.get(ssmParamName) || "";
+  };
+})();
+
 export const cacheGetAccessToken = async (
   ebayAppKeySsmParamName: string,
   ebayUserTokenSsmParamName: string,
   ebayIsSandbox: boolean
 ) => {
-  const keysStr = await getSecureSsmParam(ebayAppKeySsmParamName);
+  const keysStr = await cacheGetSsmParam(ebayAppKeySsmParamName);
   const keys = JSON.parse(keysStr);
 
-  const ssmClient = new SSMClient({});
+  const ssmClient = new SSMClient({ region: "ap-northeast-1" });
   const resToken = await ssmClient.send(
     new GetParameterCommand({
       Name: ebayUserTokenSsmParamName,
