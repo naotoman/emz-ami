@@ -13,7 +13,7 @@ phases:
             - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
             - apt install -y nodejs
             - cd /root
-            - git clone --depth 1 https://github.com/naotoman/emz-ami.git
+            - git clone https://github.com/naotoman/emz-ami.git
             - cd emz-ami/lib/ami
             - npm ci --omit=dev
             - npx playwright install chromium
