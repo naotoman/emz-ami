@@ -32,9 +32,7 @@ interface Body {
   appParams: AppParams;
 }
 
-const sqsClient = new SQSClient({
-  region: "ap-northeast-1",
-});
+const sqsClient = new SQSClient();
 const queueUrl = process.env.QUEUE_URL;
 
 const playMerc = async (page: Page): Promise<ScrapeResult<Merc>> => {
