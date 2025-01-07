@@ -3,27 +3,61 @@ import {
   ReceiveMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
-import { BrowserContext, chromium, Page } from "playwright";
+import { BrowserContext, chromium } from "playwright";
+import * as ddb from "./dynamodbUtils";
+import { listItem, retrieveItem } from "./listing";
 import { myLog } from "./myUtils";
-import { Merc, Mshop, scrapeMerc, scrapeMshop, ScrapeResult } from "./scraper";
+import { runPlaywright } from "./playwright-scraper";
+import { Merc, Mshop, ScrapeResult } from "./scraper";
 import { randomUserAgent } from "./useragent";
 
 interface User {
   username: string;
+  sellerBlacklist: string[];
+  returnPolicy: string;
+  paymentPolicy: string;
+  profitRatio: number;
+  merchantLocationKey: string;
 }
 
 interface Item {
+  id: string;
   orgPlatform: string;
   orgUrl: string;
   ebaySku: string;
+  isOrgLive: boolean;
+  isImageChanged: boolean;
+  isListed: boolean;
+  orgImageUrls: string[];
+  orgPrice: number;
+  orgTitle: string;
+  shippingYen: number;
+  ebayTitle: string;
+  ebayDescription: string;
+  ebayCategory: string;
+  ebayStoreCategory: string;
+  ebayCondition: string;
+  ebayConditionDescription?: string;
+  ebayImageUrls: string[];
+  ebayAspectParam: Record<string, unknown>;
+  ebayFulfillmentPolicy: string;
+  orgExtraParam: {
+    isPayOnDelivery: boolean;
+    rateScore: number;
+    rateCount: number;
+    shippedFrom: string;
+    shippedWithin: string;
+    shippingMethod: string;
+    sellerId: string;
+    itemCondition: string;
+  };
 }
 
 interface AppParams {
-  r2Domain: string;
-  r2Endpoint: string;
-  r2Bucket: string;
-  r2Prefix: string;
-  r2KeySsmParamName: string;
+  ebayIsSandbox: boolean;
+  ebayAppKeySsmParamName: string;
+  ebayUserTokenSsmParamPrefix: string;
+  usdJpy: number;
 }
 
 interface Body {
@@ -32,45 +66,55 @@ interface Body {
   appParams: AppParams;
 }
 
-const sqsClient = new SQSClient({
-  region: "ap-northeast-1",
-});
-const queueUrl = process.env.QUEUE_URL;
+const REGION = "ap-northeast-1";
+const QUEUE_URL = process.env.QUEUE_URL!;
+const TABLE_NAME = process.env.TABLE_NAME!;
 
-const playMerc = async (page: Page): Promise<ScrapeResult<Merc>> => {
-  const failureLocator = page.locator("div.merEmptyState");
-  const priceLocator = page.locator('#item-info div[data-testid="price"]');
-  const imageLocator = page.locator('article div[data-testid="image-0"] img');
-  const userLocator = page.locator("div.merUserObject");
-  await failureLocator.or(priceLocator).waitFor({ timeout: 16000 });
-  await failureLocator.or(imageLocator).waitFor({ timeout: 16000 });
-  await failureLocator.or(userLocator).waitFor({ timeout: 16000 });
-
-  page.on("console", (msg) => console.log(msg.text()));
-  const scrapeResult = await page.evaluate(scrapeMerc);
-  return scrapeResult;
-};
-
-const playMshop = async (page: Page): Promise<ScrapeResult<Mshop>> => {
-  const failureLocator = page.locator("div.merEmptyState");
-  const priceLocator = page.locator(
-    '#product-info div[data-testid="product-price"]'
+const isBanListing = (
+  item: Item,
+  user: User,
+  stockInfo: ScrapeResult<Merc | Mshop>
+) => {
+  return (
+    stockInfo.stockStatus === "outofstock" ||
+    stockInfo.stockData == null ||
+    item.orgImageUrls.toString() !==
+      stockInfo.stockData.core.imageUrls.toString() ||
+    stockInfo.stockData.core.price >= 100000 ||
+    stockInfo.stockData.extra.isPayOnDelivery ||
+    stockInfo.stockData.extra.rateScore < 4.8 ||
+    stockInfo.stockData.extra.rateCount < 10 ||
+    stockInfo.stockData.extra.shippedFrom === "沖縄県" ||
+    stockInfo.stockData.extra.shippedFrom === "海外" ||
+    (stockInfo.stockData.extra.shippedWithin === "4~7日で発送" &&
+      stockInfo.stockData.extra.shippingMethod.includes("普通郵便")) ||
+    (stockInfo.stockData.extra.shippedWithin === "4~7日で発送" &&
+      stockInfo.stockData.extra.shippingMethod === "未定") ||
+    stockInfo.stockData.extra.itemCondition === "新品、未使用" ||
+    [
+      "即購入禁止",
+      "即購入不可",
+      "コメント必須",
+      "海外製",
+      "海外から発送",
+      "海外からの発送",
+    ].some((keyword) =>
+      stockInfo.stockData?.core.description.includes(keyword)
+    ) ||
+    user.sellerBlacklist.includes(stockInfo.stockData.extra.sellerId)
+    // item.lastUpdated !== "半年以上前" &&
+    // 該当商品が売れた場合、売れてから仕入れるまでのラグを考慮して48時間経過するまでは再出品しない。
+    // 売れた後、より安い商品が見つかった場合など必ずしも同一商品を仕入れない可能性があるので、再出品できる余地を残す。
+    // (!item.soldTimeStamp || currentTime - item.soldTimeStamp > 172800)
   );
-  const imageLocator = page.locator('article div[data-testid="image-0"] img');
-  const userLocator = page.locator("div.merUserObject");
-  await failureLocator.or(priceLocator).waitFor({ timeout: 16000 });
-  await failureLocator.or(imageLocator).waitFor({ timeout: 16000 });
-  await failureLocator.or(userLocator).waitFor({ timeout: 16000 });
-
-  page.on("console", (msg) => console.log(msg.text()));
-  const scrapeResult = await page.evaluate(scrapeMshop);
-  return scrapeResult;
 };
 
 async function pollMessage(context: BrowserContext) {
-  console.log("polling");
+  const sqsClient = new SQSClient({
+    region: REGION,
+  });
   const receiveCommand = new ReceiveMessageCommand({
-    QueueUrl: queueUrl,
+    QueueUrl: QUEUE_URL,
     MaxNumberOfMessages: 1,
     WaitTimeSeconds: 3,
   });
@@ -91,9 +135,50 @@ async function pollMessage(context: BrowserContext) {
   const body: Body = JSON.parse(message.Body);
   myLog(body);
 
+  const stockInfo = await runPlaywright(
+    body.item.orgPlatform,
+    body.item.orgUrl,
+    context
+  );
+  myLog(stockInfo);
+
+  const isBan = isBanListing(body.item, body.user, stockInfo);
+
+  let item = structuredClone(body.item);
+  item.isOrgLive = stockInfo.stockStatus === "instock";
+  if (item.isOrgLive && stockInfo.stockData) {
+    const stock = stockInfo.stockData;
+    item = {
+      ...item,
+      orgImageUrls: stock.core.imageUrls,
+      orgPrice: stock.core.price,
+      orgTitle: stock.core.title,
+      orgExtraParam: stock.extra,
+      isImageChanged:
+        item.isImageChanged ||
+        item.orgImageUrls.toString() !== stock.core.imageUrls.toString(),
+    };
+  }
+  if (isBan) {
+    console.log("retrieve item ", item.id);
+    item = {
+      ...item,
+      isListed: false,
+    };
+    await retrieveItem(item, body.user, body.appParams);
+  } else {
+    console.log("list item ", item.id);
+    await listItem(item, body.user, body.appParams);
+  }
+
+  // db更新
+  const { id, ...updateInput } = item;
+  myLog({ updateInput });
+  await ddb.updateItem(TABLE_NAME, "id", id, updateInput);
+
   // メッセージを正常に処理したら削除
   const deleteCommand = new DeleteMessageCommand({
-    QueueUrl: queueUrl,
+    QueueUrl: QUEUE_URL,
     ReceiptHandle: message.ReceiptHandle,
   });
   await sqsClient.send(deleteCommand);
