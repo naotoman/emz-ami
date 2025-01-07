@@ -2,7 +2,7 @@
   "name": "emz-ami",
   "version": "1.0.0",
   "scripts": {
-    "start": "tsx index.ts"
+    "start": "tsx src/index.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.5"
