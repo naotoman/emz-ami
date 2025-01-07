@@ -6,12 +6,23 @@ export class EmzAmiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const cloudwatchAgentComponent = new cdk.aws_imagebuilder.CfnComponent(
+      this,
+      "CloudwatchAgentComponent",
+      {
+        name: "CloudwatchAgentComponent",
+        version: "1.0.1",
+        platform: "Linux",
+        data: fs.readFileSync("./lib/install-cloudwatch-agent.yml", "utf8"),
+      }
+    );
+
     const buildComponent = new cdk.aws_imagebuilder.CfnComponent(
       this,
       "EmzAmiBuildComponent",
       {
         name: "EmzAmiBuildComponent",
-        version: "1.0.3",
+        version: "1.0.12",
         platform: "Linux",
         data: fs.readFileSync("./lib/build.yml", "utf8"),
       }
@@ -22,8 +33,11 @@ export class EmzAmiStack extends cdk.Stack {
       "EmzAmiRecipe",
       {
         name: "EmzAmiRecipe",
-        version: "1.0.3",
-        components: [{ componentArn: buildComponent.attrArn }],
+        version: "1.0.12",
+        components: [
+          { componentArn: cloudwatchAgentComponent.attrArn },
+          { componentArn: buildComponent.attrArn },
+        ],
         parentImage: "ami-0265fbea221288607",
       }
     );
@@ -40,9 +54,6 @@ export class EmzAmiStack extends cdk.Stack {
       cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
         "EC2InstanceProfileForImageBuilder"
       )
-    );
-    role.addManagedPolicy(
-      cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess")
     );
 
     const instanceProfile = new cdk.aws_iam.CfnInstanceProfile(
@@ -61,12 +72,6 @@ export class EmzAmiStack extends cdk.Stack {
         name: "EmzAmiInfraConfig",
         instanceProfileName: instanceProfile.instanceProfileName!,
         instanceTypes: ["t4g.small"],
-        logging: {
-          s3Logs: {
-            s3BucketName: "ebay-temporary-files-autodelete",
-            s3KeyPrefix: "EmzAmiInfraConfig",
-          },
-        },
       }
     );
     infraConfig.addDependency(instanceProfile);

@@ -5,14 +5,14 @@
     "start": "tsx index.ts"
   },
   "devDependencies": {
-    "@types/node": "^22.10.5",
-    "tsx": "^4.19.2"
+    "@types/node": "^22.10.5"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.721.0",
     "@aws-sdk/client-sqs": "^3.721.0",
     "@aws-sdk/util-dynamodb": "^3.721.0",
     "@playwright/test": "^1.49.1",
-    "axios": "^1.7.9"
+    "axios": "^1.7.9",
+    "tsx": "^4.19.2"
   }
 }

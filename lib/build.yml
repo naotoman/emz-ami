@@ -5,16 +5,16 @@ schemaVersion: 1.0
 phases:
   - name: build
     steps:
-      - name: BuildEmzAmi
+      - name: Setup
         action: ExecuteBash
         inputs:
           commands:
-            - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-            - source ~/.bashrc
-            - nvm install 20
+            - apt update -y
+            - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+            - apt install -y nodejs
+            - cd /root
             - git clone --depth 1 https://github.com/naotoman/emz-ami.git
-            - cd emz-ami/lib/src
-            - npm ci
+            - cd emz-ami/lib/ami
+            - npm ci --omit=dev
             - npx playwright install chromium
             - npx playwright install-deps
-            - npm run start

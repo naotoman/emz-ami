@@ -1,0 +1,62 @@
+name: InstallCloudwatchAgent
+description: this document installs cloudwatch agent on ubuntu
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: InstallCloudwatchAgent
+        action: ExecuteBash
+        inputs:
+          commands:
+            - wget https://amazoncloudwatch-agent-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
+            - dpkg -i -E ./amazon-cloudwatch-agent.deb
+            - |
+              tee /tmp/log-config.json << EOF
+              {
+                "metrics": {
+                  "metrics_collected": {
+                    "cpu": {
+                      "resources": [
+                        "*"
+                      ],
+                      "measurement": [
+                        "usage_active"
+                      ],
+                      "totalcpu": true
+                    },
+                    "mem": {
+                      "measurement": [
+                        "used_percent"
+                      ]
+                    }
+                  }
+                },
+                "logs": {
+                  "logs_collected": {
+                    "files": {
+                      "collect_list": [
+                        {
+                          "file_path": "/root/app.log",
+                          "log_group_name": "ec2-agent-test-log", 
+                          "log_stream_name": "{instance_id}",
+                          "timestamp_format": "%Y-%m-%d %H:%M:%S"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+              EOF
+            - amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/tmp/log-config.json -s
+            - |
+              tee /etc/logrotate.d/emz << EOF
+              /root/app.log {
+                daily
+                rotate 7
+                compress
+                missingok
+                notifempty
+                copytruncate
+              }
+              EOF
