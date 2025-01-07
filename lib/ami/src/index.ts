@@ -41,6 +41,7 @@ interface Item {
   ebayImageUrls: string[];
   ebayAspectParam: Record<string, unknown>;
   ebayFulfillmentPolicy: string;
+  listingId?: string;
   orgExtraParam: {
     isPayOnDelivery: boolean;
     rateScore: number;
@@ -69,6 +70,10 @@ interface Body {
 const REGION = "ap-northeast-1";
 const QUEUE_URL = process.env.QUEUE_URL!;
 const TABLE_NAME = process.env.TABLE_NAME!;
+
+let total_success = 0;
+let total_error = 0;
+let consecutive_error = 0;
 
 const isBanListing = (
   item: Item,
@@ -168,7 +173,8 @@ async function pollMessage(context: BrowserContext) {
     await retrieveItem(item, body.user, body.appParams);
   } else {
     console.log("list item ", item.id);
-    await listItem(item, body.user, body.appParams);
+    const listingId = await listItem(item, body.user, body.appParams);
+    item.listingId = listingId;
   }
 
   // db更新
@@ -182,6 +188,9 @@ async function pollMessage(context: BrowserContext) {
     ReceiptHandle: message.ReceiptHandle,
   });
   await sqsClient.send(deleteCommand);
+
+  total_success += 1;
+  consecutive_error = 0;
 }
 
 // ポーリングを開始
@@ -192,11 +201,21 @@ async function startPolling() {
   });
 
   while (true) {
+    if (consecutive_error > 4 || total_error > 20) {
+      console.error("[ERROR] poling ended because of too many errors");
+      break;
+    }
+    if (total_success > 1000) {
+      console.log("polling ended because of too many successes");
+      break;
+    }
     const start = Date.now();
     try {
       await pollMessage(context);
     } catch (error) {
-      console.error("Polling error:", error);
+      console.error("[ERROR] Polling error:", error);
+      total_error += 1;
+      consecutive_error += 1;
     }
     const elapsed = Date.now() - start;
     if (elapsed < 5000) {
@@ -205,6 +224,11 @@ async function startPolling() {
   }
 }
 
-startPolling().catch((error) => {
-  console.error("Polling error:", error);
-});
+startPolling()
+  .catch((error) => {
+    console.error("[ERROR] polling accidently ended:", error);
+  })
+  .finally(() => {
+    console.log("polling ended");
+    myLog({ total_success, total_error, consecutive_error });
+  });
