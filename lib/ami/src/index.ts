@@ -178,6 +178,7 @@ async function pollMessage(context: BrowserContext) {
   } else {
     console.log("list item ", item.id);
     const listingId = await listItem(item, body.user, body.appParams);
+    console.log("listingId", listingId);
     item.listingId = listingId;
   }
 
