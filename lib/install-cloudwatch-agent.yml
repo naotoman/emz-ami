@@ -37,8 +37,8 @@ phases:
                     "files": {
                       "collect_list": [
                         {
-                          "file_path": "/root/app.log",
-                          "log_group_name": "ec2-agent-test-log", 
+                          "file_path": "/root/emz.log",
+                          "log_group_name": "EMZ-ec2-app", 
                           "log_stream_name": "{instance_id}",
                           "timestamp_format": "%Y-%m-%d %H:%M:%S"
                         }
@@ -51,7 +51,7 @@ phases:
             - amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/tmp/log-config.json -s
             - |
               tee /etc/logrotate.d/emz << EOF
-              /root/app.log {
+              /root/emz.log {
                 daily
                 rotate 7
                 compress

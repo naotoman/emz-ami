@@ -1,6 +1,8 @@
 import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { marshall } from "@aws-sdk/util-dynamodb";
 
+const ddbClient = new DynamoDBClient({ region: "ap-northeast-1" });
+
 interface UpdateItemInput {
   TableName: string;
   Key: { [key: string]: any };
@@ -44,7 +46,6 @@ export const updateItem = async (
   params: { [key: string]: any }
 ): Promise<void> => {
   const input = makeInputForUpdateItem(tableName, key, keyVal, params);
-  const ddbClient = new DynamoDBClient({ region: "ap-northeast-1" });
   const command = new UpdateItemCommand(input);
   await ddbClient.send(command);
 };

@@ -67,9 +67,12 @@ interface Body {
   appParams: AppParams;
 }
 
-const REGION = "ap-northeast-1";
 const QUEUE_URL = process.env.QUEUE_URL!;
 const TABLE_NAME = process.env.TABLE_NAME!;
+
+const sqsClient = new SQSClient({
+  region: "ap-northeast-1",
+});
 
 let total_success = 0;
 let total_error = 0;
@@ -115,9 +118,6 @@ const isBanListing = (
 };
 
 async function pollMessage(context: BrowserContext) {
-  const sqsClient = new SQSClient({
-    region: REGION,
-  });
   const receiveCommand = new ReceiveMessageCommand({
     QueueUrl: QUEUE_URL,
     MaxNumberOfMessages: 1,
@@ -131,21 +131,20 @@ async function pollMessage(context: BrowserContext) {
   }
 
   const message = response.Messages[0];
-  console.log("Received message:", message?.Body);
   if (!message?.Body) {
     console.error("Message body is empty");
     return;
   }
 
   const body: Body = JSON.parse(message.Body);
-  myLog(body);
+  myLog({ body });
 
   const stockInfo = await runPlaywright(
     body.item.orgPlatform,
     body.item.orgUrl,
     context
   );
-  myLog(stockInfo);
+  myLog({ stockInfo });
 
   const isBan = isBanListing(body.item, body.user, stockInfo);
 
