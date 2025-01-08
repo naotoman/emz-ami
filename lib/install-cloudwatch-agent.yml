@@ -39,8 +39,7 @@ phases:
                         {
                           "file_path": "/root/emz.log",
                           "log_group_name": "EMZ-ec2-app", 
-                          "log_stream_name": "{instance_id}",
-                          "timestamp_format": "%Y-%m-%d %H:%M:%S"
+                          "log_stream_name": "{instance_id}"
                         }
                       ]
                     }

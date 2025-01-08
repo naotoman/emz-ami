@@ -52,80 +52,66 @@ export const scrapeMerc: Scraper<Merc> = () => {
   }
 
   const url = location.href;
-  console.log({ url });
 
   const imageUrls = Array.from(
     document.querySelectorAll<HTMLImageElement>(
       'article div[data-testid^="image-"] img'
     )
   ).map((img) => img.src);
-  console.log({ imageUrls: imageUrls.join(",") });
 
   const description = document.querySelector<HTMLPreElement>(
     '#item-info pre[data-testid="description"]'
   )?.textContent;
-  console.log({ description });
 
   const title =
     document.querySelector<HTMLHeadingElement>("#item-info h1")?.textContent;
-  console.log({ title });
 
   const priceSpans = document.querySelectorAll<HTMLSpanElement>(
     '#item-info div[data-testid="price"] span'
   );
   const priceStr = priceSpans[1]?.textContent?.replace(/,/g, "");
-  console.log({ priceStr });
+  console.log("priceStr", priceStr);
   const price = Number(priceStr);
-  console.log({ price });
 
   const lastUpdated = document
     .querySelectorAll("#item-info > section")[1]
     ?.querySelector("p.merText")?.textContent;
-  console.log({ lastUpdated });
 
   const itemCondition = document.querySelector(
     '#item-info span[data-testid="商品の状態"]'
   )?.textContent;
-  console.log({ itemCondition });
 
   const isPayOnDelivery = document
     .querySelector('#item-info span[data-testid="配送料の負担"]')
     ?.textContent?.includes("着払い");
-  console.log({ isPayOnDelivery });
 
   const shippingMethod = document.querySelector(
     '#item-info span[data-testid="配送の方法"]'
   )?.textContent;
-  console.log({ shippingMethod });
 
   const shippedFrom = document.querySelector(
     '#item-info span[data-testid="発送元の地域"]'
   )?.textContent;
-  console.log({ shippedFrom });
 
   const shippedWithin = document.querySelector(
     '#item-info span[data-testid="発送までの日数"]'
   )?.textContent;
-  console.log({ shippedWithin });
 
   const sellerId = document.querySelector<HTMLAnchorElement>(
     'a[data-location="item_details:seller_info"]'
   )?.pathname;
-  console.log({ sellerId });
 
   const rateScoreStr = document
     .querySelector("div.merUserObject div.merRating")
     ?.getAttribute("aria-label");
-  console.log({ rateScoreStr });
+  console.log("rateScoreStr", rateScoreStr);
   const rateScore = Number(rateScoreStr);
-  console.log({ rateScore });
 
   const rateCountStr = document.querySelector(
     'div.merUserObject div.merRating span[class^="count__"]'
   )?.textContent;
-  console.log({ rateCountStr });
+  console.log("rateCountStr", rateCountStr);
   const rateCount = Number(rateCountStr);
-  console.log({ rateCount });
 
   if (
     !url ||
@@ -208,80 +194,66 @@ export const scrapeMshop: Scraper<Mshop> = () => {
   }
 
   const url = location.href;
-  console.log({ url });
 
   const imageUrls = Array.from(
     document.querySelectorAll<HTMLImageElement>(
       'article div[data-testid^="image-"] img'
     )
   ).map((img) => img.src);
-  console.log({ imageUrls: imageUrls.join(",") });
 
   const title =
     document.querySelector<HTMLHeadingElement>("#product-info h1")?.textContent;
-  console.log({ title });
 
   const description = document.querySelector<HTMLPreElement>(
     '#product-info pre[data-testid="description"]'
   )?.textContent;
-  console.log({ description });
 
   const priceSpans = document.querySelectorAll<HTMLSpanElement>(
     '#product-info div[data-testid="product-price"] span'
   );
   const priceStr = priceSpans[1]?.textContent?.replace(/,/g, "");
-  console.log({ priceStr });
+  console.log("priceStr", priceStr);
   const price = Number(priceStr);
-  console.log({ price });
 
   const lastUpdated = document
     .querySelectorAll("#product-info > section")[1]
     ?.querySelector("p.merText")?.textContent;
-  console.log({ lastUpdated });
 
   const itemCondition = document.querySelector(
     '#product-info span[data-testid="商品の状態"]'
   )?.textContent;
-  console.log({ itemCondition });
 
   const isPayOnDelivery = document
     .querySelector('#product-info span[data-testid="配送料の負担"]')
     ?.textContent?.includes("着払い");
-  console.log({ isPayOnDelivery });
 
   const shippingMethod = document.querySelector(
     '#product-info span[data-testid="配送の方法"]'
   )?.textContent;
-  console.log({ shippingMethod });
 
   const shippedFrom = document.querySelector(
     '#product-info span[data-testid="発送元の地域"]'
   )?.textContent;
-  console.log({ shippedFrom });
 
   const shippedWithin = document.querySelector(
     '#product-info span[data-testid="発送までの日数"]'
   )?.textContent;
-  console.log({ shippedWithin });
 
   const sellerId = document.querySelector<HTMLAnchorElement>(
     'a[data-location="item_details:shop_info"]'
   )?.pathname;
-  console.log({ sellerId });
 
   const rateScoreStr = document
     .querySelector("div.merUserObject div.merRating")
     ?.getAttribute("aria-label");
-  console.log({ rateScoreStr });
+  console.log("rateScoreStr", rateScoreStr);
   const rateScore = Number(rateScoreStr);
-  console.log({ rateScore });
 
   const rateCountStr = document.querySelector(
     'div.merUserObject div.merRating span[class^="count__"]'
   )?.textContent;
-  console.log({ rateCountStr });
+  console.log("rateCountStr", rateCountStr);
   const rateCount = Number(rateCountStr);
-  console.log({ rateCount });
 
   if (
     !url ||

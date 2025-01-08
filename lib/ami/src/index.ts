@@ -6,7 +6,6 @@ import {
 import { BrowserContext, chromium } from "playwright";
 import * as ddb from "./dynamodbUtils";
 import { listItem, retrieveItem } from "./listing";
-import { myLog } from "./myUtils";
 import { runPlaywright } from "./playwright-scraper";
 import { Merc, Mshop, ScrapeResult } from "./scraper";
 import { randomUserAgent } from "./useragent";
@@ -137,14 +136,20 @@ async function pollMessage(context: BrowserContext) {
   }
 
   const body: Body = JSON.parse(message.Body);
-  myLog({ body });
+  console.log(
+    JSON.stringify({ body }, (_, v) => (v === undefined ? "!!UNDEFINED!!" : v))
+  );
 
   const stockInfo = await runPlaywright(
     body.item.orgPlatform,
     body.item.orgUrl,
     context
   );
-  myLog({ stockInfo });
+  console.log(
+    JSON.stringify({ stockInfo }, (_, v) =>
+      v === undefined ? "!!UNDEFINED!!" : v
+    )
+  );
 
   const isBan = isBanListing(body.item, body.user, stockInfo);
 
@@ -178,7 +183,11 @@ async function pollMessage(context: BrowserContext) {
 
   // db更新
   const { id, ...updateInput } = item;
-  myLog({ updateInput });
+  console.log(
+    JSON.stringify({ updateInput }, (_, v) =>
+      v === undefined ? "!!UNDEFINED!!" : v
+    )
+  );
   await ddb.updateItem(TABLE_NAME, "id", id, updateInput);
 
   // メッセージを正常に処理したら削除
@@ -201,18 +210,27 @@ async function startPolling() {
 
   while (true) {
     if (consecutive_error > 4 || total_error > 20) {
-      console.error("[ERROR] poling ended because of too many errors");
+      console.error("Poling ended because of too many errors");
       break;
     }
     if (total_success > 1000) {
-      console.log("polling ended because of too many successes");
+      console.log("Polling ended because of too many successes");
       break;
     }
     const start = Date.now();
     try {
       await pollMessage(context);
-    } catch (error) {
-      console.error("[ERROR] Polling error:", error);
+    } catch (error: any) {
+      console.error(
+        JSON.stringify({
+          message: "[ERROR] Error occured in polling.",
+          content: {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          },
+        })
+      );
       total_error += 1;
       consecutive_error += 1;
     }
@@ -225,9 +243,22 @@ async function startPolling() {
 
 startPolling()
   .catch((error) => {
-    console.error("[ERROR] polling accidently ended:", error);
+    console.error(
+      JSON.stringify({
+        message: "[ERROR] polling accidently ended.",
+        content: {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        },
+      })
+    );
   })
   .finally(() => {
-    console.log("polling ended");
-    myLog({ total_success, total_error, consecutive_error });
+    console.log(
+      JSON.stringify({
+        message: "Polling ended.",
+        content: { total_success, total_error, consecutive_error },
+      })
+    );
   });

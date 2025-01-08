@@ -12,7 +12,6 @@ import {
   publishOffer,
   updateOffer,
 } from "./ebay";
-import { myLog } from "./myUtils";
 interface User {
   username: string;
   returnPolicy: string;
@@ -42,13 +41,6 @@ interface AppParams {
   ebayAppKeySsmParamName: string;
   ebayUserTokenSsmParamPrefix: string;
   usdJpy: number;
-}
-
-interface Event {
-  command: string;
-  user: User;
-  item: Item;
-  appParams: AppParams;
 }
 
 const cacheGetSsmParam = (() => {
@@ -153,7 +145,11 @@ export const listItem = async (
       ? { conditionDescription: item.ebayConditionDescription }
       : {}),
   };
-  myLog({ inventoryPayload });
+  console.log(
+    JSON.stringify({ inventoryPayload }, (_, v) =>
+      v === undefined ? "!!UNDEFINED!!" : v
+    )
+  );
 
   const price =
     (item.orgPrice + item.shippingYen) /
@@ -174,7 +170,11 @@ export const listItem = async (
     merchantLocationKey: user.merchantLocationKey,
     storeCategoryNames: [item.ebayStoreCategory],
   };
-  myLog({ offerPayload });
+  console.log(
+    JSON.stringify({ offerPayload }, (_, v) =>
+      v === undefined ? "!!UNDEFINED!!" : v
+    )
+  );
 
   const accessToken = await cacheGetAccessToken(
     appParams.ebayAppKeySsmParamName,
