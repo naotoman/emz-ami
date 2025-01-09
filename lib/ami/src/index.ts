@@ -214,7 +214,7 @@ async function startPolling() {
       console.error("Poling ended because of too many errors");
       break;
     }
-    if (total_success > 1000) {
+    if (total_success > 2000) {
       console.log("Polling ended because of too many successes");
       break;
     }
@@ -236,8 +236,10 @@ async function startPolling() {
       consecutive_error += 1;
     }
     const elapsed = Date.now() - start;
-    if (elapsed < 5000) {
-      await new Promise((resolve) => setTimeout(resolve, 5000 - elapsed));
+    // 8000ms ~ 12000msの間でランダムに待機
+    const randomTime = Math.floor(Math.random() * 4000) + 8000;
+    if (elapsed < randomTime) {
+      await new Promise((resolve) => setTimeout(resolve, randomTime - elapsed));
     }
   }
 }
