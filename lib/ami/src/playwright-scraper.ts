@@ -46,14 +46,6 @@ export const runPlaywright = async (
     }
   })();
   const page = await context.newPage();
-  let reqCount = 0;
-  page.on("request", async (data) => {
-    if (reqCount === 0) {
-      const headers = await data.allHeaders();
-      console.log(JSON.stringify(headers));
-      reqCount++;
-    }
-  });
   try {
     await page.goto(url);
     const result = await scraper(page);
