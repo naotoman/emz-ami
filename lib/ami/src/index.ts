@@ -4,6 +4,7 @@ import {
   SQSClient,
 } from "@aws-sdk/client-sqs";
 import { BrowserContext, chromium } from "playwright";
+import { chromiumArgs } from "./chromium-args";
 import * as ddb from "./dynamodbUtils";
 import { listItem, retrieveItem } from "./listing";
 import { runPlaywright } from "./playwright-scraper";
@@ -204,7 +205,9 @@ async function pollMessage(context: BrowserContext) {
 
 // ポーリングを開始
 async function startPolling() {
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({
+    args: chromiumArgs,
+  });
   const context = await browser.newContext({
     userAgent: randomUserAgent(),
   });
