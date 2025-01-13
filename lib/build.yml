@@ -16,5 +16,4 @@ phases:
             - git clone https://github.com/naotoman/emz-ami.git
             - cd emz-ami/lib/ami
             - npm ci --omit=dev
-            - npx playwright install chromium
             - npx playwright install-deps

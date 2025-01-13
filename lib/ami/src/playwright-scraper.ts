@@ -47,7 +47,7 @@ export const runPlaywright = async (
   })();
   const page = await context.newPage();
   try {
-    await page.goto(url);
+    await page.goto(url, { waitUntil: "domcontentloaded" });
     const result = await scraper(page);
     return result;
   } finally {
