@@ -165,6 +165,13 @@ export const listItem = async (
       fulfillmentPolicyId: item.ebayFulfillmentPolicy,
       paymentPolicyId: user.paymentPolicy,
       returnPolicyId: user.returnPolicy,
+      bestOfferTerms: {
+        bestOfferEnabled: true,
+        autoDeclinePrice: {
+          currency: "USD",
+          value: (price * 0.89).toFixed(2),
+        },
+      },
     },
     pricingSummary: { price: { currency: "USD", value: price.toFixed(2) } },
     merchantLocationKey: user.merchantLocationKey,
