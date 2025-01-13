@@ -36,17 +36,25 @@ export const runPlaywright = async (
   url: string,
   context: BrowserContext
 ) => {
+  const scraper = (() => {
+    if (platform === "merc") {
+      return playMerc;
+    } else if (platform === "mshop") {
+      return playMshop;
+    } else {
+      throw new Error(`invalid platform: ${platform}`);
+    }
+  })();
   const page = await context.newPage();
+  let reqCount = 0;
+  page.on("request", async (data) => {
+    if (reqCount === 0) {
+      const headers = await data.allHeaders();
+      console.log(JSON.stringify(headers));
+      reqCount++;
+    }
+  });
   try {
-    const scraper = (() => {
-      if (platform === "merc") {
-        return playMerc;
-      } else if (platform === "mshop") {
-        return playMshop;
-      } else {
-        throw new Error(`invalid platform: ${platform}`);
-      }
-    })();
     await page.goto(url);
     const result = await scraper(page);
     return result;
