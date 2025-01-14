@@ -213,11 +213,11 @@ async function startPolling() {
   });
 
   while (true) {
-    if (consecutive_error > 4 || total_error > 20) {
+    if (consecutive_error > 2 || total_error > 10) {
       console.error("Poling ended because of too many errors");
       break;
     }
-    if (total_success > 2000) {
+    if (total_success > 1000) {
       console.log("Polling ended because of too many successes");
       break;
     }
