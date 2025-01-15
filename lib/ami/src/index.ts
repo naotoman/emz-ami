@@ -27,6 +27,7 @@ interface Item {
   ebaySku: string;
   isOrgLive: boolean;
   isImageChanged: boolean;
+  hasBigPriceChange: boolean;
   isListed: boolean;
   orgImageUrls: string[];
   orgPrice: number;
@@ -88,7 +89,9 @@ const isBanListing = (
     stockInfo.stockData == null ||
     item.orgImageUrls.toString() !==
       stockInfo.stockData.core.imageUrls.toString() ||
-    stockInfo.stockData.core.price >= 100000 ||
+    Math.abs(item.orgPrice - stockInfo.stockData.core.price) >
+      Math.max(item.orgPrice * 0.5, 6000) ||
+    stockInfo.stockData.core.price > 80000 ||
     stockInfo.stockData.extra.isPayOnDelivery ||
     stockInfo.stockData.extra.rateScore < 4.8 ||
     stockInfo.stockData.extra.rateCount < 10 ||
@@ -167,6 +170,10 @@ async function pollMessage(context: BrowserContext) {
       isImageChanged:
         item.isImageChanged ||
         item.orgImageUrls.toString() !== stock.core.imageUrls.toString(),
+      hasBigPriceChange:
+        item.hasBigPriceChange ||
+        Math.abs(item.orgPrice - stock.core.price) >
+          Math.max(item.orgPrice * 0.5, 6000),
     };
   }
   if (isBan) {
