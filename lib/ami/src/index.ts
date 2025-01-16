@@ -246,8 +246,8 @@ async function startPolling() {
       consecutive_error += 1;
     }
     const elapsed = Date.now() - start;
-    // 15000ms ~ 20000msの間でランダムに待機
-    const randomTime = Math.floor(Math.random() * 5000) + 15000;
+    // 25000ms ~ 30000msの間でランダムに待機
+    const randomTime = Math.floor(Math.random() * 5000) + 25000;
     if (elapsed < randomTime) {
       await new Promise((resolve) => setTimeout(resolve, randomTime - elapsed));
     }
